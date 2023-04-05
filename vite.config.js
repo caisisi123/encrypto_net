@@ -7,22 +7,10 @@ import {defineConfig} from "vite";
 export default defineConfig({
     build:{
         lib:{
-            entry:resolve(__dirname,'./index.js'),
+            entry:resolve(__dirname,'src/index.js'),
             name:'cryptoNet',
         },
-        minify:true,
-    },
-    esbuild: {
-        drop: ["console", "debugger"],
-        minify:true,
-        minifyWhitespace: true
-    },
-    optimizeDeps: {
-        esbuildOptions: {
-            "minifyWhitespace": true,
-            "minifyIdentifiers": true,
-            "minifySyntax": true
-        },
+        minify:false,
     },
 })
 

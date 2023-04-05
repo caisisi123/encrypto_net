@@ -1,402 +1,525 @@
-var m = (r, t, e) => {
-  if (!t.has(r))
-    throw TypeError("Cannot " + e);
+var __accessCheck = (obj, member, msg) => {
+  if (!member.has(obj))
+    throw TypeError("Cannot " + msg);
 };
-var f = (r, t, e) => (m(r, t, "read from private field"), e ? e.call(r) : t.get(r)), h = (r, t, e) => {
-  if (t.has(r))
+var __privateGet = (obj, member, getter) => {
+  __accessCheck(obj, member, "read from private field");
+  return getter ? getter.call(obj) : member.get(obj);
+};
+var __privateAdd = (obj, member, value) => {
+  if (member.has(obj))
     throw TypeError("Cannot add the same private member more than once");
-  t instanceof WeakSet ? t.add(r) : t.set(r, e);
+  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 };
-function p(r) {
-  const t = T(r);
-  return U(t);
+var _responseInterceptionObj, _requestInterceptionObj;
+function utf16ToBase64(str) {
+  const utf8Arr = strToUTF8Arr(str);
+  const base64Str = base64EncArr(utf8Arr);
+  return base64Str;
 }
-function D(r) {
-  const t = b(r);
-  return k(t);
+function base64ToUtf16(base64Str) {
+  const utf8Arr = base64DecToArr(base64Str);
+  const utf16Str = UTF8ArrToStr(utf8Arr);
+  return utf16Str;
 }
-function g(r) {
-  return r > 64 && r < 91 ? r - 65 : r > 96 && r < 123 ? r - 71 : r > 47 && r < 58 ? r + 4 : r === 43 ? 62 : r === 47 ? 63 : 0;
+function b64ToUint6(nChr) {
+  return nChr > 64 && nChr < 91 ? nChr - 65 : nChr > 96 && nChr < 123 ? nChr - 71 : nChr > 47 && nChr < 58 ? nChr + 4 : nChr === 43 ? 62 : nChr === 47 ? 63 : 0;
 }
-function b(r, t) {
-  const e = r.replace(/[^A-Za-z0-9+/]/g, ""), i = e.length, n = t ? Math.ceil((i * 3 + 1 >> 2) / t) * t : i * 3 + 1 >> 2, c = new Uint8Array(n);
-  let o, s, a = 0, u = 0;
-  for (let l = 0; l < i; l++)
-    if (s = l & 3, a |= g(e.charCodeAt(l)) << 6 * (3 - s), s === 3 || i - l === 1) {
-      for (o = 0; o < 3 && u < n; )
-        c[u] = a >>> (16 >>> o & 24) & 255, o++, u++;
-      a = 0;
+function base64DecToArr(sBase64, nBlocksSize) {
+  const sB64Enc = sBase64.replace(/[^A-Za-z0-9+/]/g, "");
+  const nInLen = sB64Enc.length;
+  const nOutLen = nBlocksSize ? Math.ceil((nInLen * 3 + 1 >> 2) / nBlocksSize) * nBlocksSize : nInLen * 3 + 1 >> 2;
+  const taBytes = new Uint8Array(nOutLen);
+  let nMod3;
+  let nMod4;
+  let nUint24 = 0;
+  let nOutIdx = 0;
+  for (let nInIdx = 0; nInIdx < nInLen; nInIdx++) {
+    nMod4 = nInIdx & 3;
+    nUint24 |= b64ToUint6(sB64Enc.charCodeAt(nInIdx)) << 6 * (3 - nMod4);
+    if (nMod4 === 3 || nInLen - nInIdx === 1) {
+      nMod3 = 0;
+      while (nMod3 < 3 && nOutIdx < nOutLen) {
+        taBytes[nOutIdx] = nUint24 >>> (16 >>> nMod3 & 24) & 255;
+        nMod3++;
+        nOutIdx++;
+      }
+      nUint24 = 0;
     }
-  return c;
+  }
+  return taBytes;
 }
-function y(r) {
-  return r < 26 ? r + 65 : r < 52 ? r + 71 : r < 62 ? r - 4 : r === 62 ? 43 : r === 63 ? 47 : 65;
+function uint6ToB64(nUint6) {
+  return nUint6 < 26 ? nUint6 + 65 : nUint6 < 52 ? nUint6 + 71 : nUint6 < 62 ? nUint6 - 4 : nUint6 === 62 ? 43 : nUint6 === 63 ? 47 : 65;
 }
-function U(r) {
-  let t = 2, e = "";
-  const i = r.length;
-  let n = 0;
-  for (let c = 0; c < i; c++)
-    t = c % 3, n |= r[c] << (16 >>> t & 24), (t === 2 || r.length - c === 1) && (e += String.fromCodePoint(
-      y(n >>> 18 & 63),
-      y(n >>> 12 & 63),
-      y(n >>> 6 & 63),
-      y(n & 63)
-    ), n = 0);
-  return e.substring(0, e.length - 2 + t) + (t === 2 ? "" : t === 1 ? "=" : "==");
+function base64EncArr(aBytes) {
+  let nMod3 = 2;
+  let sB64Enc = "";
+  const nLen = aBytes.length;
+  let nUint24 = 0;
+  for (let nIdx = 0; nIdx < nLen; nIdx++) {
+    nMod3 = nIdx % 3;
+    nUint24 |= aBytes[nIdx] << (16 >>> nMod3 & 24);
+    if (nMod3 === 2 || aBytes.length - nIdx === 1) {
+      sB64Enc += String.fromCodePoint(
+        uint6ToB64(nUint24 >>> 18 & 63),
+        uint6ToB64(nUint24 >>> 12 & 63),
+        uint6ToB64(nUint24 >>> 6 & 63),
+        uint6ToB64(nUint24 & 63)
+      );
+      nUint24 = 0;
+    }
+  }
+  return sB64Enc.substring(0, sB64Enc.length - 2 + nMod3) + (nMod3 === 2 ? "" : nMod3 === 1 ? "=" : "==");
 }
-function k(r) {
-  let t = "", e;
-  const i = r.length;
-  for (let n = 0; n < i; n++)
-    e = r[n], t += String.fromCodePoint(
-      e > 251 && e < 254 && n + 5 < i ? (
+function UTF8ArrToStr(aBytes) {
+  let sView = "";
+  let nPart;
+  const nLen = aBytes.length;
+  for (let nIdx = 0; nIdx < nLen; nIdx++) {
+    nPart = aBytes[nIdx];
+    sView += String.fromCodePoint(
+      nPart > 251 && nPart < 254 && nIdx + 5 < nLen ? (
         /* (nPart - 252 << 30) may be not so safe in ECMAScript! So…: */
-        (e - 252) * 1073741824 + (r[++n] - 128 << 24) + (r[++n] - 128 << 18) + (r[++n] - 128 << 12) + (r[++n] - 128 << 6) + r[++n] - 128
-      ) : e > 247 && e < 252 && n + 4 < i ? (e - 248 << 24) + (r[++n] - 128 << 18) + (r[++n] - 128 << 12) + (r[++n] - 128 << 6) + r[++n] - 128 : e > 239 && e < 248 && n + 3 < i ? (e - 240 << 18) + (r[++n] - 128 << 12) + (r[++n] - 128 << 6) + r[++n] - 128 : e > 223 && e < 240 && n + 2 < i ? (e - 224 << 12) + (r[++n] - 128 << 6) + r[++n] - 128 : e > 191 && e < 224 && n + 1 < i ? (e - 192 << 6) + r[++n] - 128 : (
+        (nPart - 252) * 1073741824 + (aBytes[++nIdx] - 128 << 24) + (aBytes[++nIdx] - 128 << 18) + (aBytes[++nIdx] - 128 << 12) + (aBytes[++nIdx] - 128 << 6) + aBytes[++nIdx] - 128
+      ) : nPart > 247 && nPart < 252 && nIdx + 4 < nLen ? (nPart - 248 << 24) + (aBytes[++nIdx] - 128 << 18) + (aBytes[++nIdx] - 128 << 12) + (aBytes[++nIdx] - 128 << 6) + aBytes[++nIdx] - 128 : nPart > 239 && nPart < 248 && nIdx + 3 < nLen ? (nPart - 240 << 18) + (aBytes[++nIdx] - 128 << 12) + (aBytes[++nIdx] - 128 << 6) + aBytes[++nIdx] - 128 : nPart > 223 && nPart < 240 && nIdx + 2 < nLen ? (nPart - 224 << 12) + (aBytes[++nIdx] - 128 << 6) + aBytes[++nIdx] - 128 : nPart > 191 && nPart < 224 && nIdx + 1 < nLen ? (nPart - 192 << 6) + aBytes[++nIdx] - 128 : (
         /* nPart < 127 ? */
         /* one byte */
-        e
+        nPart
       )
     );
-  return t;
+  }
+  return sView;
 }
-function T(r) {
-  let t, e;
-  const i = r.length;
-  let n = 0;
-  for (let s = 0; s < i; s++)
-    e = r.codePointAt(s), e >= 65536 && s++, n += e < 128 ? 1 : e < 2048 ? 2 : e < 65536 ? 3 : e < 2097152 ? 4 : e < 67108864 ? 5 : 6;
-  t = new Uint8Array(n);
-  let c = 0, o = 0;
-  for (; c < n; )
-    e = r.codePointAt(o), e < 128 ? t[c++] = e : e < 2048 ? (t[c++] = 192 + (e >>> 6), t[c++] = 128 + (e & 63)) : e < 65536 ? (t[c++] = 224 + (e >>> 12), t[c++] = 128 + (e >>> 6 & 63), t[c++] = 128 + (e & 63)) : e < 2097152 ? (t[c++] = 240 + (e >>> 18), t[c++] = 128 + (e >>> 12 & 63), t[c++] = 128 + (e >>> 6 & 63), t[c++] = 128 + (e & 63), o++) : e < 67108864 ? (t[c++] = 248 + (e >>> 24), t[c++] = 128 + (e >>> 18 & 63), t[c++] = 128 + (e >>> 12 & 63), t[c++] = 128 + (e >>> 6 & 63), t[c++] = 128 + (e & 63), o++) : (t[c++] = 252 + (e >>> 30), t[c++] = 128 + (e >>> 24 & 63), t[c++] = 128 + (e >>> 18 & 63), t[c++] = 128 + (e >>> 12 & 63), t[c++] = 128 + (e >>> 6 & 63), t[c++] = 128 + (e & 63), o++), o++;
-  return t;
+function strToUTF8Arr(sDOMStr) {
+  let aBytes;
+  let nChr;
+  const nStrLen = sDOMStr.length;
+  let nArrLen = 0;
+  for (let nMapIdx = 0; nMapIdx < nStrLen; nMapIdx++) {
+    nChr = sDOMStr.codePointAt(nMapIdx);
+    if (nChr >= 65536) {
+      nMapIdx++;
+    }
+    nArrLen += nChr < 128 ? 1 : nChr < 2048 ? 2 : nChr < 65536 ? 3 : nChr < 2097152 ? 4 : nChr < 67108864 ? 5 : 6;
+  }
+  aBytes = new Uint8Array(nArrLen);
+  let nIdx = 0;
+  let nChrIdx = 0;
+  while (nIdx < nArrLen) {
+    nChr = sDOMStr.codePointAt(nChrIdx);
+    if (nChr < 128) {
+      aBytes[nIdx++] = nChr;
+    } else if (nChr < 2048) {
+      aBytes[nIdx++] = 192 + (nChr >>> 6);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 65536) {
+      aBytes[nIdx++] = 224 + (nChr >>> 12);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+    } else if (nChr < 2097152) {
+      aBytes[nIdx++] = 240 + (nChr >>> 18);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+      nChrIdx++;
+    } else if (nChr < 67108864) {
+      aBytes[nIdx++] = 248 + (nChr >>> 24);
+      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+      nChrIdx++;
+    } else {
+      aBytes[nIdx++] = 252 + (nChr >>> 30);
+      aBytes[nIdx++] = 128 + (nChr >>> 24 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 18 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 12 & 63);
+      aBytes[nIdx++] = 128 + (nChr >>> 6 & 63);
+      aBytes[nIdx++] = 128 + (nChr & 63);
+      nChrIdx++;
+    }
+    nChrIdx++;
+  }
+  return aBytes;
 }
-function S(r, t) {
-  return new Promise((e, i) => {
-    const n = new FileReader();
-    switch (n.addEventListener("loadend", (c) => {
-      if (n.error)
-        i(n.error);
-      else
-        switch (t) {
+function readBlob(blob, type) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("loadend", (e) => {
+      if (reader.error) {
+        reject(reader.error);
+      } else {
+        switch (type) {
           case "url":
-            e(URL.createObjectURL(r));
+            console.log(reader.result);
+            resolve(URL.createObjectURL(blob));
             break;
           case "text":
-            e(n.result);
+            resolve(reader.result);
             break;
           case "stream":
-            e(r.stream());
+            resolve(blob.stream());
             break;
           case "arrayBuffer":
-            e(n.result);
+            resolve(reader.result);
             break;
           case "dataUrl":
-            e(n.result);
+            resolve(reader.result);
           default:
-            e(null);
+            resolve(null);
             break;
         }
-    }), t) {
+      }
+    });
+    switch (type) {
       case "url":
-        n.readAsDataURL(r);
+        reader.readAsDataURL(blob);
         break;
       case "text":
-        n.readAsText(r);
+        reader.readAsText(blob);
         break;
       case "stream":
-        n.readAsBinaryString(r);
+        reader.readAsBinaryString(blob);
         break;
       case "arrayBuffer":
-        n.readAsArrayBuffer(r);
+        reader.readAsArrayBuffer(blob);
         break;
       case "dataUrl":
-        n.readAsDataURL(r);
+        reader.readAsDataURL(blob);
         break;
       default:
-        e(null);
+        resolve(null);
         break;
     }
   });
 }
-function O(r, t, e) {
-  const i = new DataView(r);
-  switch (t) {
+function readArrayBuffer(arraybuffer, type, options) {
+  const dataView = new DataView(arraybuffer);
+  switch (type) {
     case "string":
-      return new TextDecoder(e.decodeType || "utf-8").decode(r);
+      const decoder = new TextDecoder(options.decodeType || "utf-8");
+      return decoder.decode(arraybuffer);
     case "blob":
-      return new Blob([r], { type: e.blobType || "" });
+      return new Blob([arraybuffer], { type: options.blobType || "" });
     case "url":
-      return URL.createObjectURL(new Blob([r]));
+      const url = URL.createObjectURL(new Blob([arraybuffer]));
+      return url;
     case "dataView":
-      return i;
+      return dataView;
     case "int8":
-      return new Int8Array(r);
+      const int8Array = new Int8Array(arraybuffer);
+      return int8Array;
     case "int16":
-      return new Int16Array(r);
+      const int16Array = new Int16Array(arraybuffer);
+      return int16Array;
     case "int32":
-      return new Int32Array(r);
+      const int32Array = new Int32Array(arraybuffer);
+      return int32Array;
     case "uint8":
-      return new Uint8Array(r);
+      const uint8Array = new Uint8Array(arraybuffer);
+      return uint8Array;
     case "uint16":
-      return new Uint16Array(r);
+      const uint16Array = new Uint16Array(arraybuffer);
+      return uint16Array;
     case "uint32":
-      return new Uint32Array(r);
+      const uint32Array = new Uint32Array(arraybuffer);
+      return uint32Array;
     case "float32":
-      return new Float32Array(r);
+      const float32Array = new Float32Array(arraybuffer);
+      return float32Array;
     case "float64":
-      return new Float64Array(r);
+      const float64Array = new Float64Array(arraybuffer);
+      return float64Array;
     default:
       return null;
   }
 }
-function P(r, t, { type: e }) {
-  if (t === "blob")
-    return new Blob([r], { type: e });
-  if (t === "arraybuffer")
-    return new ArrayBuffer(r);
-  if (t === "TypedArray")
-    switch (e) {
+function encodeToBinary(data, dataType, { type }) {
+  if (dataType === "blob") {
+    return new Blob([data], { type });
+  } else if (dataType === "arraybuffer") {
+    return new ArrayBuffer(data);
+  } else if (dataType === "TypedArray") {
+    switch (type) {
       case "Int8Array":
-        return Int8Array.from(r);
+        return Int8Array.from(data);
       case "Uint8Array":
-        return Uint8Array.from(r);
+        return Uint8Array.from(data);
       case "Uint8ClampedArray":
-        return Uint8ClampedArray.from(r);
+        return Uint8ClampedArray.from(data);
       case "Int16Array":
-        return Int16Array.from(r);
+        return Int16Array.from(data);
       case "Uint16Array":
-        return Uint16Array.from(r);
+        return Uint16Array.from(data);
       case "Int32Array":
-        return Int32Array.from(r);
+        return Int32Array.from(data);
       case "Uint32Array":
-        return Uint32Array.from(r);
+        return Uint32Array.from(data);
       case "Float32Array":
-        return Float32Array.from(r);
+        return Float32Array.from(data);
       case "Float64Array":
-        return Float64Array.from(r);
+        return Float64Array.from(data);
       case "BigInt64Array":
-        return BigInt64Array.from(r);
+        return BigInt64Array.from(data);
       case "BigUint64Array":
-        return BigUint64Array.from(r);
+        return BigUint64Array.from(data);
       default:
-        return Uint8Array.from(r);
+        return Uint8Array.from(data);
     }
-  else
-    return Uint8Array.from(r);
+  } else {
+    return Uint8Array.from(data);
+  }
 }
-function C(r, t) {
-  let e;
-  switch (t) {
+function encodeData(data, encoding) {
+  let encodedData;
+  switch (encoding) {
     case "base64":
-      e = p(r);
+      encodedData = utf16ToBase64(data);
       break;
     case "ascii":
-      e = "";
-      for (let c = 0; c < r.length; c++) {
-        const o = r.charCodeAt(c).toString(2);
-        e += o.padStart(8, "0");
+      encodedData = "";
+      for (let i = 0; i < data.length; i++) {
+        const charCode = data.charCodeAt(i).toString(2);
+        encodedData += charCode.padStart(8, "0");
       }
       break;
     case "utf8":
-      const n = new TextEncoder().encode(r);
-      e = String.fromCharCode.apply(null, n);
+      const encoder = new TextEncoder();
+      const utf8Data = encoder.encode(data);
+      encodedData = String.fromCharCode.apply(null, utf8Data);
       break;
     case "gbk":
-      e = unescape(encodeURIComponent(r));
+      encodedData = unescape(encodeURIComponent(data));
       break;
     case "utf16":
-      e = "";
-      for (let c = 0; c < r.length; c++) {
-        const o = r.charCodeAt(c).toString(16);
-        e += o.padStart(4, "0");
+      encodedData = "";
+      for (let i = 0; i < data.length; i++) {
+        const charCode = data.charCodeAt(i).toString(16);
+        encodedData += charCode.padStart(4, "0");
       }
       break;
     default:
-      e = r;
+      encodedData = data;
   }
-  return e;
+  return encodedData;
 }
-function V(r, t, e, i, n) {
-  let c;
-  switch (r) {
+function getEncryKey(method, algorithm, extractable, usages, options) {
+  let keyPromise;
+  switch (method) {
     case "generate":
-      c = crypto.subtle.generateKey(t, e, i);
+      keyPromise = crypto.subtle.generateKey(algorithm, extractable, usages);
       break;
     case "derive":
-      c = crypto.subtle.deriveKey(
-        n.deriveAlgorithm,
-        n.baseKey,
-        t,
-        e,
-        i
+      keyPromise = crypto.subtle.deriveKey(
+        options.deriveAlgorithm,
+        options.baseKey,
+        algorithm,
+        extractable,
+        usages
       );
       break;
     case "unwrap":
-      c = crypto.subtle.unwrapKey(
-        n.format,
-        n.wrappedKey,
-        n.unwrappingKey,
-        t,
-        e,
-        i
+      keyPromise = crypto.subtle.unwrapKey(
+        options.format,
+        options.wrappedKey,
+        options.unwrappingKey,
+        algorithm,
+        extractable,
+        usages
       );
       break;
     case "import":
-      c = crypto.subtle.importKey(
-        n.format,
-        n.keyData,
-        t,
-        e,
-        i
+      keyPromise = crypto.subtle.importKey(
+        options.format,
+        options.keyData,
+        algorithm,
+        extractable,
+        usages
       );
       break;
     default:
-      throw new Error(`Invalid method: ${r}`);
+      throw new Error(`Invalid method: ${method}`);
   }
-  return c;
+  return keyPromise;
 }
-function R(r, t, e, i) {
-  let n = r;
-  if (!ArrayBuffer.isView(n))
-    if (i.format)
-      switch (i.format) {
+function encry(plainText, algorithmn, key, options) {
+  let data = plainText;
+  if (!ArrayBuffer.isView(data)) {
+    if (options.format) {
+      switch (options.format) {
         case "arrayBuffer":
-          n = new ArrayBuffer(n.length);
-          const c = new DataView(n);
-          for (let a = 0; a < n.byteLength; a++)
-            c.setInt8(a, n[a]);
+          data = new ArrayBuffer(data.length);
+          const dataView = new DataView(data);
+          for (let i = 0; i < data.byteLength; i++) {
+            dataView.setInt8(i, data[i]);
+          }
           break;
         case "typedArray":
-          n = Uint8Array.from(n);
+          data = Uint8Array.from(data);
           break;
         case "DataView":
-          const o = new ArrayBuffer(n.length), s = new DataView(o);
-          for (let a = 0; a < n.byteLength; a++)
-            s.setInt8(a, n[a]);
-          n = s;
+          const buffer = new ArrayBuffer(data.length);
+          const dataview = new DataView(buffer);
+          for (let i = 0; i < data.byteLength; i++) {
+            dataview.setInt8(i, data[i]);
+          }
+          data = dataview;
       }
-    else
-      n = Uint8Array.from(n);
-  return window.crypto.subtle.encrypt(t, e, n);
+    } else {
+      data = Uint8Array.from(data);
+    }
+  }
+  return window.crypto.subtle.encrypt(algorithmn, key, data);
 }
-function j(r, t, e) {
-  return window.crypto.subtle.decrypt(t, e, r);
+function decry(cipherText, algorithmn, key) {
+  return window.crypto.subtle.decrypt(algorithmn, key, cipherText);
 }
-function K(r, t, e) {
-  return ArrayBuffer.isView(r) || (r = Uint8Array.from(r)), window.crypto.subtle.sign(t, e, r);
+function sign(data, algorithmn, key) {
+  if (!ArrayBuffer.isView(data)) {
+    data = Uint8Array.from(data);
+  }
+  return window.crypto.subtle.sign(algorithmn, key, data);
 }
-function B(r, t, e, i) {
-  return window.crypto.subtle.verify(e, i, t, r);
+function verify(signedData, signature, algorithmn, key) {
+  return window.crypto.subtle.verify(algorithmn, key, signature, signedData);
 }
-function v(r, t) {
-  return ArrayBuffer.isView(t) || (t = Uint8Array.from(t)), window.crypto.subtle.digest(r, t);
+function generateDigest(algorithmn, data) {
+  if (!ArrayBuffer.isView(data)) {
+    data = Uint8Array.from(data);
+  }
+  return window.crypto.subtle.digest(algorithmn, data);
 }
-function I(r, t) {
+function fetchAxios(requestInterceptionObj, responseInterceptionObj) {
   return new Proxy(fetch, {
-    apply(e, i, n) {
-      return r.request && r.request.apply(i, n), e(...n).then((c) => {
-        c.status >= 200 && c.status < 300 ? t.response && t.response.apply(i, c) : t.error && t.error(i, c);
-      }).catch((c) => {
-        r.error && r.error(c);
+    apply(target, thisArg, argArray) {
+      if (requestInterceptionObj.request) {
+        requestInterceptionObj.request.apply(thisArg, argArray);
+      }
+      return target(...argArray).then((res) => {
+        if (res.status >= 200 && res.status < 300) {
+          if (responseInterceptionObj.response)
+            responseInterceptionObj.response.apply(thisArg, res);
+        } else {
+          if (responseInterceptionObj.error)
+            responseInterceptionObj.error(thisArg, res);
+        }
+      }).catch((error) => {
+        if (requestInterceptionObj.error)
+          requestInterceptionObj.error(error);
       });
     }
   });
 }
-var d, A;
-class w {
-  static mFetch(t, e) {
-    return I(f(this, A), f(this, d))(t, e);
+class Axios {
+  static mFetch(url, options) {
+    return fetchAxios(__privateGet(this, _requestInterceptionObj), __privateGet(this, _responseInterceptionObj))(url, options);
   }
-  static get(t, e) {
-    return this.mFetch(t, Object.assign({ method: "GET" }, e));
+  static get(url, options) {
+    return this.mFetch(url, Object.assign({ method: "GET" }, options));
   }
-  static post(t, e) {
-    return this.mFetch(t, Object.assign({ method: "POST" }, e));
+  static post(url, options) {
+    return this.mFetch(url, Object.assign({ method: "POST" }, options));
   }
-  static put(t, e) {
-    return this.mFetch(t, Object.assign({ method: "PUT" }, e));
+  static put(url, options) {
+    return this.mFetch(url, Object.assign({ method: "PUT" }, options));
   }
-  static delete(t, e) {
-    return this.mFetch(t, Object.assign({ method: "DELETE" }, e));
+  static delete(url, options) {
+    return this.mFetch(url, Object.assign({ method: "DELETE" }, options));
   }
-  static patch(t, e) {
-    return this.mFetch(t, Object.assign({ method: "PATCH" }, e));
+  static patch(url, options) {
+    return this.mFetch(url, Object.assign({ method: "PATCH" }, options));
   }
-  static options(t, e) {
-    return this.mFetch(t, Object.assign({ method: "OPTIONS" }, e));
+  static options(url, options) {
+    return this.mFetch(url, Object.assign({ method: "OPTIONS" }, options));
   }
-  static head(t, e) {
-    return this.mFetch(t, Object.assign({ method: "HEAD" }, e));
+  static head(url, options) {
+    return this.mFetch(url, Object.assign({ method: "HEAD" }, options));
   }
-  static trace(t, e) {
-    return this.mFetch(t, Object.assign({ method: "TRACE" }, e));
+  static trace(url, options) {
+    return this.mFetch(url, Object.assign({ method: "TRACE" }, options));
   }
-  static connect(t, e) {
-    return this.mFetch(t, Object.assign({ method: "CONNECT" }, e));
+  static connect(url, options) {
+    return this.mFetch(url, Object.assign({ method: "CONNECT" }, options));
   }
-  static requestInterception(t, e) {
-    f(this, A).request = t, f(this, A).error = e;
+  static requestInterception(dealConfig, dealError) {
+    __privateGet(this, _requestInterceptionObj).request = dealConfig;
+    __privateGet(this, _requestInterceptionObj).error = dealError;
   }
-  static responseInterception(t, e) {
-    f(this, d).response = t, f(this, d).error = e;
+  static responseInterception(dealResponse, dealError) {
+    __privateGet(this, _responseInterceptionObj).response = dealResponse;
+    __privateGet(this, _responseInterceptionObj).error = dealError;
   }
 }
-d = new WeakMap(), A = new WeakMap(), h(w, d, {}), h(w, A, {});
-function q(r) {
+_responseInterceptionObj = new WeakMap();
+_requestInterceptionObj = new WeakMap();
+__privateAdd(Axios, _responseInterceptionObj, {});
+__privateAdd(Axios, _requestInterceptionObj, {});
+function preLoadScript(src) {
   window.addEventListener("DOMContentLoaded", () => {
-    const t = document.createElement("script");
-    t.src = r, t.async = !0, document.head.appendChild(t);
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    document.head.appendChild(script);
   });
 }
-function H(r, { crossOrigin: t }) {
+function prefetchAsset(src, { crossOrigin }) {
   window.requestIdleCallback(() => {
-    const e = document.createElement("link");
-    switch (e.href = r, e.rel = "prefetch", new URL(r, import.meta.url).host !== document.location.host && (e.crossOrigin = t || "use-credentials"), r.split(".").pop()) {
+    const link = document.createElement("link");
+    link.href = src;
+    link.rel = "prefetch";
+    const url = new URL(src, import.meta.url);
+    console.log(url.host);
+    if (url.host !== document.location.host) {
+      link.crossOrigin = crossOrigin || "use-credentials";
+    }
+    const ext = src.split(".").pop();
+    switch (ext) {
       case "css":
-        e.as = "style";
+        link.as = "style";
         break;
       case "png":
-        e.as = "image";
+        link.as = "image";
         break;
       default:
-        e.as = "fetch";
+        link.as = "fetch";
     }
-    document.head.appendChild(e);
+    document.head.appendChild(link);
   });
 }
-function M(r, t, e, i) {
-  return new Promise((n, c) => {
-    const o = document.querySelector(r);
-    function s(a) {
-      let u = null;
+function scrollLoad(containerSelector, offset, delay, options) {
+  return new Promise((resolve, reject) => {
+    const container = document.querySelector(containerSelector);
+    function debounce(fn) {
+      let timer = null;
       return function() {
-        clearTimeout(u), u = setTimeout(a, e);
+        clearTimeout(timer);
+        timer = setTimeout(fn, delay);
       };
     }
-    o.addEventListener("scroll", s(function() {
-      const { scrollTop: a, offsetHeight: u, scrollHeight: l } = div;
-      a + u > l - t && n(!0);
+    container.addEventListener("scroll", debounce(function() {
+      const { scrollTop, offsetHeight, scrollHeight } = div;
+      if (scrollTop + offsetHeight > scrollHeight - offset) {
+        resolve(true);
+      }
     }));
   });
 }
 export {
-  w as Axios,
-  D as base64ToUtf16,
-  j as decry,
-  C as encodeData,
-  P as encodeToBinary,
-  R as encry,
-  v as generateDigest,
-  V as getEncryKey,
-  q as preLoadScript,
-  H as prefetchAsset,
-  O as readArrayBuffer,
-  S as readBlob,
-  M as scrollLoad,
-  K as sign,
-  p as utf16ToBase64,
-  B as verify
+  Axios,
+  base64ToUtf16,
+  decry,
+  encodeData,
+  encodeToBinary,
+  encry,
+  generateDigest,
+  getEncryKey,
+  preLoadScript,
+  prefetchAsset,
+  readArrayBuffer,
+  readBlob,
+  scrollLoad,
+  sign,
+  utf16ToBase64,
+  verify
 };
