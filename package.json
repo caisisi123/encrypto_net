@@ -1,0 +1,17 @@
+{
+  "name": "cryptoNet",
+  "version": "1.0.0",
+  "description": "some useful functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "vite build",
+    "esbuild": "esbuild  --minify dist/cryptoNet.umd.js --outfile=/public/encryptoNet.umd.js "
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.17.15",
+    "vite": "^4.2.1"
+  }
+}
