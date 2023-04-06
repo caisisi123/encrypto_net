@@ -1,9 +1,9 @@
 {
   "name": "crypto_net",
-  "version": "1.0.3",
+  "version": "1.0.7",
   "description": "some useful functions",
   "type": "module",
-  "main": "dist/cryptoNet.mjs",
+  "main": "dist/crypto_net.js",
   "files": [
     "src",
     "dist",
@@ -16,7 +16,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "crypto_net": "^1.0.3",
     "vite": "^4.2.1"
   },
   "keywords": [

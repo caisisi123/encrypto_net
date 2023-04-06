@@ -1,36 +1,28 @@
-import {utf16ToBase64} from "./base64.mjs";
-
-function encodeData(data, encoding) {
-    let encodedData;
-    switch(encoding) {
-        case "base64":
-            encodedData = utf16ToBase64(data);
-            break;
-        case "ascii":
-            encodedData = '';
-            for (let i = 0; i < data.length; i++) {
-                const charCode = data.charCodeAt(i).toString(2);
-                encodedData += charCode.padStart(8, '0');
+// Description: This file contains the functions to encode and decode the string
+function encodeStr(str, encoding) {
+    switch (encoding) {
+        case 'utf-16':
+            const codePoints = [];
+            for(let i=0;i<str.length;i++){
+                codePoints.push(str.codePointAt(i));
             }
-            break;
-        case "utf8":
-            const encoder = new TextEncoder();
-            const utf8Data = encoder.encode(data);
-            encodedData = String.fromCharCode.apply(null, utf8Data);
-            break;
-        case "gbk":
-            encodedData = unescape(encodeURIComponent(data));
-            break;
-        case "utf16":
-            encodedData = '';
-            for (let i = 0; i < data.length; i++) {
-                const charCode = data.charCodeAt(i).toString(16);
-                encodedData += charCode.padStart(4, '0');
-            }
-            break;
-        default:
-            encodedData = data;
+            return codePoints;
+            case 'utf-8':
+                const encoder=new TextEncoder();
+                return encoder.encode(str);
     }
-    return encodedData;
 }
-export {encodeData}
+function decodeCodePoints(coePoints,encoding) {
+    if(encoding==='utf-16'){
+        let str='';
+        for(let i=0;i<codePoints.length;i++){
+            str+=String.fromCodePoint(codePoints[i]);
+        }
+        return str;
+    }
+   const decoder=new TextDecoder(encoding);
+    return decoder.decode(codePoints);
+}
+
+console.log(encodeStr('A是！', 'utf-16'));
+export {encodeStr,decodeCodePoints}

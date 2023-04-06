@@ -271,38 +271,29 @@ function encodeToBinary(data, dataType, { type }) {
     return Uint8Array.from(data);
   }
 }
-function encodeData(data, encoding) {
-  let encodedData;
+function encodeStr(str, encoding) {
   switch (encoding) {
-    case "base64":
-      encodedData = utf16ToBase64(data);
-      break;
-    case "ascii":
-      encodedData = "";
-      for (let i = 0; i < data.length; i++) {
-        const charCode = data.charCodeAt(i).toString(2);
-        encodedData += charCode.padStart(8, "0");
+    case "utf-16":
+      const codePoints2 = [];
+      for (let i = 0; i < str.length; i++) {
+        codePoints2.push(str.codePointAt(i));
       }
-      break;
-    case "utf8":
+      return codePoints2;
+    case "utf-8":
       const encoder = new TextEncoder();
-      const utf8Data = encoder.encode(data);
-      encodedData = String.fromCharCode.apply(null, utf8Data);
-      break;
-    case "gbk":
-      encodedData = unescape(encodeURIComponent(data));
-      break;
-    case "utf16":
-      encodedData = "";
-      for (let i = 0; i < data.length; i++) {
-        const charCode = data.charCodeAt(i).toString(16);
-        encodedData += charCode.padStart(4, "0");
-      }
-      break;
-    default:
-      encodedData = data;
+      return encoder.encode(str);
   }
-  return encodedData;
+}
+function decodeCodePoints(coePoints, encoding) {
+  if (encoding === "utf-16") {
+    let str = "";
+    for (let i = 0; i < codePoints.length; i++) {
+      str += String.fromCodePoint(codePoints[i]);
+    }
+    return str;
+  }
+  const decoder = new TextDecoder(encoding);
+  return decoder.decode(codePoints);
 }
 function getEncryKey(method, algorithm, extractable, usages, options) {
   let keyPromise;
@@ -508,8 +499,9 @@ function scrollLoad(containerSelector, offset, delay, options) {
 export {
   Axios,
   base64ToUtf16,
+  decodeCodePoints,
   decry,
-  encodeData,
+  encodeStr,
   encodeToBinary,
   encry,
   generateDigest,

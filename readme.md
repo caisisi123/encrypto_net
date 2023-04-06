@@ -24,7 +24,11 @@ import {encode} from 'crypto_net'
   将base64字符串转换为utf16编码的字符串。
 
 * utf16ToBase64(utf16String: string): string
-  将二进制数据编码为utf-16编码的字符串。
+  将utf16编码的字符串转换为base64字符串。
+* encodeStr(str:String, encoding:"utf-8"|"utf-16"):Uint8Array|Uint16Array
+  返回编码后的Uint8Array或者Uint16Array。
+* decodeCodePoints(codePoints:Uint8Array, encoding:"utf-8"|"utf-16"|"windows-1251"|"base64"|"ascii"|"utf-8"|"gbk"等编码类型): string
+  返回解码后的字符串
 
 #### 2. Encryption and Decryption
 *  getEncryKey(method, algorithm, extractable, usages, options):promise
