@@ -15,7 +15,13 @@ npm install crypto_net
 ### Usage:
 ```javascript
 // es module
-import {encode} from 'crypto_net'
+import {utf16ToBase64,base64ToUtf16,encodeStr,decodeCodePoints} from 'crypto_net'
+utf16ToBase64('你好')//5L2g5aW9
+base64ToUtf16('5L2g5aW9')//你好
+encodeStr('你好', 'utf-16')//Uint16Array(2)[20320, 22909]
+decodeCodePoints(new Uint16Array([20320, 22909]), 'utf-16')//你好
+encodeStr('你好', 'utf-8')//Uint8Array(6) [ 228, 189, 160, 229, 165, 189 ]
+decodeCodePoints(new Uint8Array([228, 189, 160, 229, 165, 189]), 'utf-8')//你好
 ```
 ### API:
 #### 1. Encoding and Decoding

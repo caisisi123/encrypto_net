@@ -166,6 +166,7 @@ function readBlob(blob, type) {
             break;
           case "dataUrl":
             resolve(reader.result);
+            break;
           default:
             resolve(null);
             break;
@@ -208,8 +209,7 @@ function readArrayBuffer(arraybuffer, type, options) {
     case "dataView":
       return dataView;
     case "int8":
-      const int8Array = new Int8Array(arraybuffer);
-      return int8Array;
+      return new Int8Array(arraybuffer);
     case "int16":
       const int16Array = new Int16Array(arraybuffer);
       return int16Array;
@@ -217,11 +217,9 @@ function readArrayBuffer(arraybuffer, type, options) {
       const int32Array = new Int32Array(arraybuffer);
       return int32Array;
     case "uint8":
-      const uint8Array = new Uint8Array(arraybuffer);
-      return uint8Array;
+      return new Uint8Array(arraybuffer);
     case "uint16":
-      const uint16Array = new Uint16Array(arraybuffer);
-      return uint16Array;
+      return new Uint16Array(arraybuffer);
     case "uint32":
       const uint32Array = new Uint32Array(arraybuffer);
       return uint32Array;
@@ -274,26 +272,27 @@ function encodeToBinary(data, dataType, { type }) {
 function encodeStr(str, encoding) {
   switch (encoding) {
     case "utf-16":
-      const codePoints2 = [];
+      const codePoints = [];
       for (let i = 0; i < str.length; i++) {
-        codePoints2.push(str.codePointAt(i));
+        codePoints.push(str.codePointAt(i));
       }
-      return codePoints2;
+      return codePoints;
     case "utf-8":
       const encoder = new TextEncoder();
       return encoder.encode(str);
   }
 }
-function decodeCodePoints(coePoints, encoding) {
+function decodeCodePoints(codePoints, encoding = "utf-8") {
   if (encoding === "utf-16") {
     let str = "";
     for (let i = 0; i < codePoints.length; i++) {
       str += String.fromCodePoint(codePoints[i]);
     }
     return str;
+  } else {
+    const decoder = new TextDecoder(encoding);
+    return decoder.decode(codePoints);
   }
-  const decoder = new TextDecoder(encoding);
-  return decoder.decode(codePoints);
 }
 function getEncryKey(method, algorithm, extractable, usages, options) {
   let keyPromise;

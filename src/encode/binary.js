@@ -50,7 +50,7 @@ function readBlob(blob, type) {
                 break;
             case 'dataUrl':
                 reader.readAsDataURL(blob);
-                break
+                break;
             default:
                 resolve(null);
                 break;

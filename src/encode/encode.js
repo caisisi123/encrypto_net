@@ -12,17 +12,17 @@ function encodeStr(str, encoding) {
                 return encoder.encode(str);
     }
 }
-function decodeCodePoints(coePoints,encoding) {
+function decodeCodePoints(codePoints,encoding='utf-8'){
     if(encoding==='utf-16'){
         let str='';
         for(let i=0;i<codePoints.length;i++){
             str+=String.fromCodePoint(codePoints[i]);
         }
         return str;
+    }else{
+        const decoder=new TextDecoder(encoding);
+        return decoder.decode(codePoints);
     }
-   const decoder=new TextDecoder(encoding);
-    return decoder.decode(codePoints);
-}
 
-console.log(encodeStr('A是！', 'utf-16'));
+}
 export {encodeStr,decodeCodePoints}
